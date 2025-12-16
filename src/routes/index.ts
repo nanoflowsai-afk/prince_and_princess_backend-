@@ -22,6 +22,16 @@ export async function registerRoutes(
   // Test database connection on startup
   await testConnection();
 
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", message: "Backend is running", timestamp: new Date().toISOString() });
+  });
+
+  // Root API endpoint
+  app.get("/api", (req, res) => {
+    res.json({ message: "Prince and Princess API", version: "1.0.0" });
+  });
+
   // ========== PRODUCTS API ==========
   app.get("/api/products", async (req, res) => {
     try {
