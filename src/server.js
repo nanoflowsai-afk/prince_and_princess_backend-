@@ -14,6 +14,7 @@ const httpServer = createServer(app);
 // Allow both localhost (development) and Vercel frontend (production)
 const allowedOrigins = [
   "http://localhost:5000",
+  "http://localhost:5173", // Vite default port
   "https://prince-and-princess-frontend.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
@@ -21,17 +22,33 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log("[CORS] Request with no origin - allowing");
+      return callback(null, true);
+    }
     
-    // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
+    console.log(`[CORS] Checking origin: ${origin}`);
+    
+    // Check if origin is in allowed list (case-insensitive)
+    const originLower = origin.toLowerCase();
+    const isAllowed = allowedOrigins.some(allowed => allowed.toLowerCase() === originLower);
+    
+    if (isAllowed) {
+      console.log(`[CORS] ✅ Origin allowed: ${origin}`);
+      callback(null, true);
+    } else if (origin.includes("vercel.app") || origin.includes("localhost")) {
+      // Allow any Vercel subdomain or localhost in production
+      console.log(`[CORS] ✅ Origin allowed (Vercel/localhost): ${origin}`);
       callback(null, true);
     } else {
       // In development, allow any localhost origin
       if (process.env.NODE_ENV !== "production" && origin.includes("localhost")) {
+        console.log(`[CORS] ✅ Origin allowed (dev localhost): ${origin}`);
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        console.log(`[CORS] ❌ Origin blocked: ${origin}`);
+        console.log(`[CORS] Allowed origins: ${allowedOrigins.join(", ")}`);
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     }
   },
