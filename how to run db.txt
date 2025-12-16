@@ -1,0 +1,23 @@
+-----Single command to run everything
+npm run setup-db
+
+
+---ndividual scripts (if needed)
+If you need to run them separately:
+# 1. Create all tables from SQL file
+npm run migrate# 
+2. Fix cart_items and create slides table
+npm run fix-schema# 
+3. Create transactions, settings, update orders/products
+npm run sync-schema# 
+4. Create admin user
+npm run create-admin
+
+
+
+
+Email: admin@prince.com
+Password: Admin@123
+
+admin login page :
+http://localhost:5000/login
