@@ -2,9 +2,10 @@
 
 // Users Table (Admin/Store Users)
 export interface User {
-  id: number;
+  id: string; // UUID string
   name: string;
   email: string;
+  username?: string; // Optional username field for storage compatibility
   phone?: string | null;
   status?: string;
   created_at?: Date | string;
@@ -14,6 +15,7 @@ export interface User {
 export interface InsertUser {
   name: string;
   email: string;
+  username?: string; // Optional username field for storage compatibility
   phone?: string | null;
   status?: string;
 }
