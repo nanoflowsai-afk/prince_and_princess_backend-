@@ -151,14 +151,14 @@ export async function updateOrder(id: number, updates: Partial<OrderInput>): Pro
   values.push(id);
   const sql = `UPDATE orders SET ${fields.join(", ")} WHERE id = ?`;
   const result = await execute(sql, values);
-  return result.affectedRows > 0;
+  return result > 0;
 }
 
 // Update order status by order_id
 export async function updateOrderStatus(orderId: string, status: string): Promise<Order | null> {
   const sql = "UPDATE orders SET status = ?, updated_at = NOW() WHERE order_id = ?";
   const result = await execute(sql, [status, orderId]);
-  if (result.affectedRows > 0) {
+  if (result > 0) {
     return await getOrderByOrderId(orderId);
   }
   return null;

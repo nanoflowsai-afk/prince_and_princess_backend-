@@ -377,7 +377,7 @@ export async function registerRoutes(
       console.log(`[AUTH] Login successful for: ${email}`);
 
       // Return user info (without password fields)
-      const { password: _, password_hash: __, ...userWithoutPassword } = user;
+      const { password_hash: _, ...userWithoutPassword } = user;
       res.json({
         success: true,
         user: userWithoutPassword,
