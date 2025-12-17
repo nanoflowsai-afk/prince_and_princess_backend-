@@ -12,6 +12,8 @@ import * as ordersDb from "../models/orders";
 import * as customerAuthDb from "../models/customerAuth";
 import * as cartDb from "../models/cart";
 import * as likedProductsDb from "../models/likedProducts";
+import * as homepageHighlightsDb from "../models/homepageHighlights";
+import * as offersDb from "../models/offers";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
@@ -158,29 +160,159 @@ export async function registerRoutes(
     }
   });
 
-  // Homepage highlights endpoint
-  app.get("/api/homepage/highlights", async (req, res) => {
+  // ========== OFFERS API ==========
+  // Public: get all offers (active + inactive)
+  app.get("/api/offers", async (_req, res) => {
     try {
-      // Return featured products (is_featured = true) and special slides
-      const allProducts = await productsDb.getAllProducts();
-      const featuredProducts = Array.isArray(allProducts) 
-        ? allProducts.filter((p: any) => p.is_featured === true || p.is_featured === 1)
-        : [];
-      
-      let specialSlides: any[] = [];
-      try {
-        specialSlides = await slidesDb.getSlidesByType("special");
-      } catch (slideError: any) {
-        // If slides table doesn't exist yet, return empty array
-        console.log("Slides not available yet:", slideError.message);
-      }
-      
-      res.json({
-        featuredProducts: featuredProducts || [],
-        specialSlides: specialSlides || [],
-      });
+      const offers = await offersDb.getAllOffers();
+      res.json(offers || []);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error("Error fetching offers:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch offers" });
+    }
+  });
+
+  // Admin: create offer
+  app.post("/api/offers", async (req, res) => {
+    try {
+      const { title, description, image_url, is_active } = req.body;
+
+      if (!title) {
+        return res.status(400).json({ error: "Title is required" });
+      }
+
+      const id = await offersDb.addOffer({
+        title,
+        description,
+        image_url,
+        is_active,
+      });
+
+      const offer = await offersDb.getOfferById(id);
+      res.status(201).json(offer);
+    } catch (error: any) {
+      console.error("Error creating offer:", error);
+      res.status(500).json({ error: error.message || "Failed to create offer" });
+    }
+  });
+
+  // Admin: update offer
+  app.put("/api/offers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ error: "Invalid offer ID" });
+      }
+
+      const success = await offersDb.updateOffer(id, req.body);
+      if (!success) {
+        return res.status(404).json({ error: "Offer not found" });
+      }
+
+      const offer = await offersDb.getOfferById(id);
+      res.json(offer);
+    } catch (error: any) {
+      console.error("Error updating offer:", error);
+      res.status(500).json({ error: error.message || "Failed to update offer" });
+    }
+  });
+
+  // Admin: delete offer
+  app.delete("/api/offers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ error: "Invalid offer ID" });
+      }
+
+      const success = await offersDb.deleteOffer(id);
+      if (!success) {
+        return res.status(404).json({ error: "Offer not found" });
+      }
+
+      res.json({ message: "Offer deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting offer:", error);
+      res.status(500).json({ error: error.message || "Failed to delete offer" });
+    }
+  });
+
+  // Homepage highlights endpoint (public - used on frontend home page)
+  app.get("/api/homepage/highlights", async (_req, res) => {
+    try {
+      const highlights = await homepageHighlightsDb.getAllHomepageHighlights();
+      res.json(highlights || []);
+    } catch (error: any) {
+      console.error("Error fetching homepage highlights:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch highlights" });
+    }
+  });
+
+  // Admin: create homepage highlight
+  app.post("/api/homepage/highlights", async (req, res) => {
+    try {
+      const { title, subtitle, icon_type, icon_value, image_url, is_active, display_order } = req.body;
+
+      if (!title) {
+        return res.status(400).json({ error: "Title is required" });
+      }
+
+      const id = await homepageHighlightsDb.addHomepageHighlight({
+        title,
+        subtitle,
+        icon_type,
+        icon_value,
+        image_url,
+        is_active,
+        display_order,
+      });
+
+      const highlight = await homepageHighlightsDb.getHomepageHighlightById(id);
+      res.status(201).json(highlight);
+    } catch (error: any) {
+      console.error("Error creating homepage highlight:", error);
+      res.status(500).json({ error: error.message || "Failed to create highlight" });
+    }
+  });
+
+  // Admin: update homepage highlight
+  app.put("/api/homepage/highlights/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ error: "Invalid highlight ID" });
+      }
+
+      const success = await homepageHighlightsDb.updateHomepageHighlight(id, req.body);
+      if (!success) {
+        return res.status(404).json({ error: "Highlight not found" });
+      }
+
+      const highlight = await homepageHighlightsDb.getHomepageHighlightById(id);
+      res.json(highlight);
+    } catch (error: any) {
+      console.error("Error updating homepage highlight:", error);
+      res.status(500).json({ error: error.message || "Failed to update highlight" });
+    }
+  });
+
+  // Admin: delete homepage highlight
+  app.delete("/api/homepage/highlights/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ error: "Invalid highlight ID" });
+      }
+
+      const success = await homepageHighlightsDb.deleteHomepageHighlight(id);
+      if (!success) {
+        return res.status(404).json({ error: "Highlight not found" });
+      }
+
+      res.json({ message: "Highlight deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting homepage highlight:", error);
+      res.status(500).json({ error: error.message || "Failed to delete highlight" });
     }
   });
 
